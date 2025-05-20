@@ -1,57 +1,29 @@
-# version: '3.8'
+version: "3"
 
 services:
-  mqtt-broker:
-    image: eclipse-mosquitto
-    container_name: mqtt-broker
-    ports:
-      - "1883:1883"
-    volumes:
-      - ./docker/broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
-    networks:
-      - twin-net
-
   sensor:
-    build:
-      context: ./docker/sensors
-    container_name: sensor
-    depends_on:
-      - mqtt-broker
-    networks:
-      - twin-net
-
+    build: ./docker/sensors
+    image: digital-twin-sensor
+    ports:
+      - "1883"
+  
   plc:
-    build:
-      context: ./docker/plc
-    container_name: plc
-    depends_on:
-      - mqtt-broker
-    networks:
-      - twin-net
+    build: ./docker/plc
+    image: digital-twin-plc
 
   dashboard:
-    build:
-      context: ./docker/dashboard
-    container_name: dashboard
+    build: ./docker/dashboard
+    image: digital-twin-dashboard
     ports:
       - "5000:5000"
-    depends_on:
-      - mqtt-broker
-    networks:
-      - twin-net
-    deploy:
-      resources:
-        limits:
-          memory: 256M
+
+  mqtt-broker:
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883"
+
   dnp3-outstation:
-    build:
-      context: ./docker/dnp3
-    container_name: dnp3-outstation
+    build: ./docker/dnp3
+    image: digital-twin-dnp3
     ports:
       - "20000:20000"
-    networks:
-      - twin-net
-
-networks:
-  twin-net:
-    driver: bridge

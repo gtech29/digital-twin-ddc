@@ -39,3 +39,4 @@ K8s/*.yaml.bak
 
 # Jupyter notebook checkpoints (optional)
 .ipynb_checkpoints/
+*.tar

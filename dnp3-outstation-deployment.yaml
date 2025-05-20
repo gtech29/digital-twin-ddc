@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: dnp3-outstation
+  name: dnp3-outstation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: dnp3-outstation
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: /snap/kompose/19/kompose-linux-amd64 convert
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: dnp3-outstation
+    spec:
+      containers:
+      - image: digital-twin-dnp3
+        imagePullPolicy: ""
+        name: dnp3-outstation
+        ports:
+        - containerPort: 20000
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}
