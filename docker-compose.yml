@@ -39,23 +39,19 @@ services:
       - mqtt-broker
     networks:
       - twin-net
-
+    deploy:
+      resources:
+        limits:
+          memory: 256M
   dnp3-outstation:
     build:
       context: ./docker/dnp3
     container_name: dnp3-outstation
-    networks:
-      - twin-net
     ports:
       - "20000:20000"
-
+    networks:
+      - twin-net
 
 networks:
   twin-net:
     driver: bridge
-
-
-
-
-
-#

@@ -15,7 +15,7 @@ async def main():
         message = f"{temp}"
         print(f"Published: {message}°C")
         client.publish(TOPIC, message)
-        await asyncio.sleep(2)
+        await asyncio.sleep(0.5)
 
 if __name__ == '__main__':
     asyncio.run(main())

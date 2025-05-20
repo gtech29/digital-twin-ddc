@@ -32,4 +32,4 @@ ENV PYTHONPATH=/app
 COPY . .
 
 # Run the app
-CMD ["python3", "app.py", "-u"]
+CMD ["python3", "app.py"]
