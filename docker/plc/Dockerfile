@@ -2,20 +2,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy requirements and install only essential dependencies
-COPY requirements.txt . 
-RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir \
-        flask \
-        flask-socketio \
-        flask-cors \
-        eventlet \
-        paho-mqtt \
-        requests \
-        "python-socketio[asyncio,eventlet]>=5.8.0"
+# Copy and install only the MQTT library
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app code
+# Copy all publisher scripts and the start-up helper
 COPY . .
 
-# Run the dashboard
-CMD ["python3", "app.py"]
+# Make sure start.sh is executable
+RUN chmod +x start.sh
+
+# Launch all PLC publishers in parallel
+CMD ["./start.sh"]

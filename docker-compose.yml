@@ -15,6 +15,8 @@ services:
     container_name: sensor
     depends_on:
       - mqtt-broker
+    environment:
+      - MQTT_BROKER=mqtt-broker
     networks:
       - twin-net
 
@@ -24,10 +26,10 @@ services:
     container_name: plc
     depends_on:
       - mqtt-broker
+    environment:
+      - MQTT_BROKER=mqtt-broker
     networks:
       - twin-net
-  
-
 
 
   dnp3:
@@ -36,6 +38,8 @@ services:
     container_name: dnp3
     depends_on:
       - mqtt-broker
+    environment:
+      - MQTT_BROKER=mqtt-broker
     networks:
       - twin-net
 
@@ -47,10 +51,11 @@ services:
       - "5000:5000"
     depends_on:
       - mqtt-broker
+    environment:
+      - MQTT_BROKER=mqtt-broker
     networks:
       - twin-net
 
 networks:
   twin-net:
     driver: bridge
-

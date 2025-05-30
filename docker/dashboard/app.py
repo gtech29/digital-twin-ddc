@@ -1,11 +1,10 @@
 from flask import Flask, render_template, jsonify
+from flask_cors import CORS
 import paho.mqtt.client as mqtt
 import threading
-from collections import defaultdict, deque
-from sklearn.ensemble import IsolationForest
-import numpy as np
 
 app = Flask(__name__)
+CORS(app)  # Allow cross-origin requests from React
 
 MQTT_BROKER = "mqtt-broker"
 MQTT_PORT = 1883
@@ -28,9 +27,6 @@ latest_values = {
         "humidity": None
     }
 }
-
-# Store historical data (up to 100 samples per parameter)
-history = defaultdict(lambda: defaultdict(lambda: deque(maxlen=100)))
 
 TOPICS = {
     "plc/temperature": ("plc", "temperature"),
@@ -61,13 +57,6 @@ def on_message(client, userdata, msg):
         device, param = TOPICS[topic]
         latest_values[device][param] = payload
 
-        # Save to history only if numeric
-        try:
-            value = float(payload)
-            history[device][param].append(value)
-        except ValueError:
-            pass  # Non-numeric values like "ON", "NORMAL" will be ignored
-
 mqtt_client = mqtt.Client(client_id="dashboard")
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
@@ -87,33 +76,6 @@ def index():
 @app.route("/api/device_data")
 def device_data():
     return jsonify(latest_values)
-
-@app.route("/api/predictions")
-def predict_anomalies():
-    # Example: anomaly detection for PLC temperature
-    device = "plc"
-    param = "temperature"
-    data = history[device][param]
-
-    if len(data) < 10:
-        return jsonify({"message": "Not enough data yet", "anomalies": []})
-
-    X = np.array(data).reshape(-1, 1)
-
-    model = IsolationForest(contamination=0.1, random_state=42)
-    model.fit(X)
-    preds = model.predict(X)
-
-    anomalies = [
-        {"index": i, "value": val, "status": "anomaly" if p == -1 else "normal"}
-        for i, (val, p) in enumerate(zip(data, preds))
-    ]
-
-    return jsonify({
-        "device": device,
-        "param": param,
-        "anomalies": anomalies
-    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
