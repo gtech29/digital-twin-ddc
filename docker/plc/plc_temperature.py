@@ -1,17 +1,15 @@
+#!/usr/bin/env python3
+import os
 import asyncio
-from gmqtt import Client as MQTTClient
 import random
+from gmqtt import Client as MQTTClient
 
-BROKER = 'mqtt-broker'   # Docker service name
-TOPIC = 'plc/temperature'
+# Use the Docker service name or fallback to localhost
+BROKER = os.getenv("MQTT_BROKER", "mqtt-broker")
+TOPIC  = "plc/temperature"
 
-client = MQTTClient("plc-1")
-
-# Callback: what to do when a message is received
-def on_message(client, topic, payload, qos, properties):
-    print(f"[PLC] Received message on {topic}: {payload.decode()}")
-
-client.on_message = on_message
+# Give this publisher a distinct ID
+client = MQTTClient("plc-temp-pub")
 
 async def connect_with_retry():
     while True:
@@ -25,18 +23,16 @@ async def connect_with_retry():
 
 async def publish_temperature():
     while True:
-        temp = round(random.uniform(20.0, 30.0), 2)  # Simulate temperature
+        temp = round(random.uniform(20.0, 30.0), 2)
         client.publish(TOPIC, str(temp))
         print(f"[PLC] Published temperature: {temp}")
-        await asyncio.sleep(2)  # Publish every 2 seconds
+        await asyncio.sleep(2)
 
 async def main():
     await connect_with_retry()
-    client.subscribe(TOPIC)
-    print(f"[PLC] Subscribed to topic: {TOPIC}")
-
+    # You don’t need to subscribe when you’re only publishing.
     asyncio.create_task(publish_temperature())
-
+    # Keep the script alive
     while True:
         await asyncio.sleep(1)
 
