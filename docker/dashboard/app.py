@@ -1,8 +1,11 @@
 from flask import Flask, render_template, jsonify
+from flask_cors import CORS  # ✅ NEW
+
 import paho.mqtt.client as mqtt
 import threading
 
 app = Flask(__name__)
+CORS(app)  # ✅ NEW — Enable CORS for all routes
 
 MQTT_BROKER = "mqtt-broker"
 MQTT_PORT = 1883
