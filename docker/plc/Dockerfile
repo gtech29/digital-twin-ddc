@@ -1,12 +1,21 @@
-FROM python:3.13-alpine
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy requirements and install only essential dependencies
+COPY requirements.txt . 
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir \
+        flask \
+        flask-socketio \
+        flask-cors \
+        eventlet \
+        paho-mqtt \
+        requests \
+        "python-socketio[asyncio,eventlet]>=5.8.0"
 
+# Copy app code
 COPY . .
 
-RUN chmod +x start.sh
-
-CMD ["./start.sh"]
+# Run the dashboard
+CMD ["python3", "app.py"]
