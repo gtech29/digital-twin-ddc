@@ -1,0 +1,13 @@
+# K8s/services/mqtt-broker-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt-broker-service
+spec:
+  selector:
+    app: mqtt-broker
+  ports:
+    - protocol: TCP
+      port: 1883
+      targetPort: 1883
+  type: ClusterIP

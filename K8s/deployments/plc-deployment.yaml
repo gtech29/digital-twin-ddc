@@ -1,0 +1,25 @@
+# K8s/deployments/plc-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plc
+  labels:
+    app: plc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plc
+  template:
+    metadata:
+      labels:
+        app: plc
+    spec:
+      containers:
+      - name: plc
+        image: nextphasedv29/plc:latest
+        env:
+        - name: MQTT_BROKER
+          value: "mqtt-broker-service"
+        - name: MQTT_TOPIC
+          value: "sensors/temperature"

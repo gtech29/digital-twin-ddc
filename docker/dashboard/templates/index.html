@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Digital Twin Dashboard</title>
+  <style>
+    /* Keep your previously enhanced styling or add your preferred styles */
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 30px 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #1e88e5;
+      font-weight: 700;
+      margin-bottom: 40px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .cards {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+      padding: 30px 25px;
+      width: 320px;
+      text-align: left;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 24px rgba(30, 136, 229, 0.3);
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #1976d2;
+      font-weight: 700;
+      font-size: 1.6rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .param {
+      font-size: 1.2rem;
+      margin: 6px 0;
+      display: flex;
+      justify-content: space-between;
+      color: #212121;
+    }
+    .param-label {
+      font-weight: 600;
+      color: #555;
+    }
+  </style>
+  <script>
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/device_data');
+        const data = await res.json();
+
+        updateParam('plc-temperature', data.plc.temperature);
+        updateParam('plc-setpoint', data.plc.setpoint);
+        updateParam('plc-humidity', data.plc.humidity);
+        updateParam('plc-fan_status', data.plc.fan_status);
+
+        updateParam('dnp3-temperature', data.dnp3.temperature);
+        updateParam('dnp3-valve_position', data.dnp3.valve_position);
+        updateParam('dnp3-alarm', data.dnp3.alarm);
+
+        updateParam('sensor-temperature', data.sensor.temperature);
+        updateParam('sensor-humidity', data.sensor.humidity);
+      } catch {
+        // In case of error, show placeholders or error text
+      }
+    }
+
+    function updateParam(id, val) {
+      document.getElementById(id).textContent = val ?? 'N/A';
+    }
+
+    setInterval(fetchData, 2000);
+    window.onload = fetchData;
+  </script>
+</head>
+<body>
+  <h1>Digital Twin Dashboard</h1>
+
+  <div class="cards">
+    <div class="card">
+      <h2>PLC</h2>
+      <div class="param"><span class="param-label">Temperature:</span> <span id="plc-temperature">--</span> °C</div>
+      <div class="param"><span class="param-label">Setpoint:</span> <span id="plc-setpoint">--</span> °C</div>
+      <div class="param"><span class="param-label">Humidity:</span> <span id="plc-humidity">--</span> %</div>
+      <div class="param"><span class="param-label">Fan Status:</span> <span id="plc-fan_status">--</span></div>
+    </div>
+
+    <div class="card">
+      <h2>DNP3 Outstation</h2>
+      <div class="param"><span class="param-label">Temperature:</span> <span id="dnp3-temperature">--</span> °C</div>
+      <div class="param"><span class="param-label">Valve Position:</span> <span id="dnp3-valve_position">--</span> %</div>
+      <div class="param"><span class="param-label">Alarm:</span> <span id="dnp3-alarm">--</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Sensor</h2>
+      <div class="param"><span class="param-label">Temperature:</span> <span id="sensor-temperature">--</span> °C</div>
+      <div class="param"><span class="param-label">Humidity:</span> <span id="sensor-humidity">--</span> %</div>
+    </div>
+  </div>
+</body>
+</html>

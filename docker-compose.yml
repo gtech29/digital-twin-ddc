@@ -1,0 +1,53 @@
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./docker/broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - twin-net
+
+  sensor:
+    build:
+      context: ./docker/sensors
+    container_name: sensor
+    depends_on:
+      - mqtt-broker
+    networks:
+      - twin-net
+
+  plc:
+    build:
+      context: ./docker/plc
+    container_name: plc
+    depends_on:
+      - mqtt-broker
+    networks:
+      - twin-net
+
+  dnp3:
+    build:
+      context: ./docker/dnp3
+    container_name: dnp3
+    depends_on:
+      - mqtt-broker
+    networks:
+      - twin-net
+
+  dashboard:
+    build:
+      context: ./docker/dashboard
+    container_name: dashboard
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mqtt-broker
+    networks:
+      - twin-net
+
+networks:
+  twin-net:
+    driver: bridge
+

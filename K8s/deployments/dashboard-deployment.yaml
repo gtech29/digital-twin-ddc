@@ -1,0 +1,25 @@
+# K8s/deployments/dashboard-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+  labels:
+    app: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: nextphasedv29/dashboard:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MQTT_BROKER
+          value: "mqtt-broker-service"
