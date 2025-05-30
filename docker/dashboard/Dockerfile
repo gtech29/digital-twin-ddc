@@ -1,16 +1,9 @@
-FROM python:3.13-alpine
+FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache --virtual .build-deps \
-        gcc musl-dev linux-headers libffi-dev libressl-dev \
-    && pip install --no-cache-dir --upgrade pip
-
-# Copy requirements and install packages
-COPY requirements.txt .
-
+# Copy requirements and install only essential dependencies
+COPY requirements.txt . 
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir \
         flask \
@@ -21,15 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt \
         requests \
         "python-socketio[asyncio,eventlet]>=5.8.0"
 
-# Clean up build deps
-RUN apk del .build-deps
-
-# Environment variables
-ENV PYTHONIOENCODING=utf-8
-ENV PYTHONPATH=/app
-
-# Copy the rest of the code
+# Copy app code
 COPY . .
 
-# Run the app
-CMD ["python3", "app.py", "-u"]
+# Run the dashboard
+CMD ["python3", "app.py"]
