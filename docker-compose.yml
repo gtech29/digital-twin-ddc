@@ -42,6 +42,14 @@ services:
     networks:
       - twin-net
 
+  jensys:
+    build:
+      context: ./docker/jensys
+    container_name: jensys
+    networks:
+      - twin-net
+  
+
   dashboard:
     build:
       context: ./docker/dashboard
