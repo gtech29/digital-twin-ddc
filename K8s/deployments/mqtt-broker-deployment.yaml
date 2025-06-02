@@ -1,10 +1,7 @@
-# K8s/deployments/mqtt-broker-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mqtt-broker
-  labels:
-    app: mqtt-broker
 spec:
   replicas: 1
   selector:
@@ -16,15 +13,15 @@ spec:
         app: mqtt-broker
     spec:
       containers:
-      - name: mqtt-broker
-        image: eclipse-mosquitto:latest
-        ports:
-        - containerPort: 1883
-        volumeMounts:
-        - name: mqtt-config
-          mountPath: /mosquitto/config/mosquitto.conf
-          subPath: mosquitto.conf
+        - name: mqtt-broker
+          image: eclipse-mosquitto
+          ports:
+            - containerPort: 1883
+          volumeMounts:
+            - name: mosquitto-config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
       volumes:
-      - name: mqtt-config
-        configMap:
-          name: mqtt-broker-config
+        - name: mosquitto-config
+          configMap:
+            name: mosquitto-config
