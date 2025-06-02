@@ -1,0 +1,52 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# === Virtual environments ===
+.venv/
+venv/
+env/
+
+# === Python packaging ===
+build/
+dist/
+*.egg-info/
+
+# === Environment variables ===
+.env
+.env.*
+
+# === Logs ===
+*.log
+*.out
+
+# === Databases ===
+*.db
+*.sqlite3
+
+# === OS-specific ===
+.DS_Store
+Thumbs.db
+
+# === Docker ===
+*.pid
+*.tar
+*.sock
+docker-compose.override.yml
+
+# === VSCode / JetBrains ===
+.vscode/
+.idea/
+
+# === Node / React / Next.js ===
+node_modules/
+.next/
+out/
+.cache/
+*.tsbuildinfo
+
+# === LLM-specific ===
+agent/model/*
+agent/venv/
+agent/__pycache__/

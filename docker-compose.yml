@@ -31,7 +31,6 @@ services:
     networks:
       - twin-net
 
-
   dnp3:
     build:
       context: ./docker/dnp3
@@ -65,8 +64,7 @@ services:
     networks:
       - twin-net
     env_file:
-      - .env  # You’ll use this for the OpenAI key later
-
+      - .env
 
 networks:
   twin-net:

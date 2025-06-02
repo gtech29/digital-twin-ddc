@@ -1,168 +1,104 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from llama_utils import ask_local_llm
+from tools import get_recent_temperatures, get_anomalies_today, check_system_health
 from datetime import datetime, timedelta
-import os
-import base64
-import openai
-import json
 
-# 🔐 Load OpenAI API Key from base64-encoded file
-def load_openai_key():
-    key_path = os.path.join(os.path.dirname(__file__), "openai_key.b64")
-    with open(key_path, "rb") as f:
-        encoded = f.read()
-    decoded = base64.b64decode(encoded).decode("utf-8").strip()
-    return decoded
-
-OPENAI_API_KEY = load_openai_key()
-openai.api_key = OPENAI_API_KEY
-
-# 🚀 Start FastAPI
 app = FastAPI()
 
-# ✅ Health check route
+# Allow CORS for frontend communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Use ["http://localhost:3000"] for tighter security in dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Health check endpoint
 @app.get("/ping")
 def ping():
-    return JSONResponse(content={"status": "ok", "message": "Agent is alive"})
+    return JSONResponse(content={"status": "ok", "message": "Local LLM agent is alive"})
 
-# 🧪 Tool: Simulated temperature data query
-def get_recent_temperatures(start_time: str = None, end_time: str = None):
-    if not start_time or not end_time:
-        end = datetime.utcnow()
-        start = end - timedelta(hours=6)
-    else:
-        start = datetime.fromisoformat(start_time)
-        end = datetime.fromisoformat(end_time)
-
-    return {
-        "start": start.isoformat(),
-        "end": end.isoformat(),
-        "data": [
-            {"timestamp": start.isoformat(), "temp": 72.5},
-            {"timestamp": (start + timedelta(hours=2)).isoformat(), "temp": 74.0},
-            {"timestamp": end.isoformat(), "temp": 73.2},
-        ]
-    }
-
-# 🧪 Tool: Simulated anomaly detector
-def get_anomalies_today():
-    now = datetime.utcnow()
-    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    return {
-        "date": start_of_day.date().isoformat(),
-        "anomalies": [
-            {"timestamp": (start_of_day + timedelta(hours=3)).isoformat(), "temp": 82.1, "status": "anomaly"},
-            {"timestamp": (start_of_day + timedelta(hours=9)).isoformat(), "temp": 84.5, "status": "anomaly"},
-        ]
-    }
-
-# 🧪 Tool: Simulated system health check
-def check_system_health():
-    return {
-        "mqtt_broker": "connected",
-        "plc": "active",
-        "sensor": "publishing",
-        "dashboard": "online",
-        "status": "healthy"
-    }
-
-# 🧰 Tool registry for OpenAI function-calling
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_recent_temperatures",
-            "description": "Retrieve temperature data over a specific time range.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "start_time": {
-                        "type": "string",
-                        "description": "Start time in ISO format (e.g. 2025-06-01T12:00:00)"
-                    },
-                    "end_time": {
-                        "type": "string",
-                        "description": "End time in ISO format (e.g. 2025-06-01T18:00:00)"
-                    }
-                },
-                "required": []
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_anomalies_today",
-            "description": "Get a list of anomalies detected today.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "check_system_health",
-            "description": "Check the health status of system components.",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
-        }
-    }
-]
-
-# 🔁 Route: Test get_recent_temperatures() directly
+# Optional: Expose tools directly for manual testing
 @app.get("/tools/get-temperatures")
 def test_temp_tool():
     return get_recent_temperatures()
 
-# 💬 Route: Smart agent with function-calling
+@app.get("/tools/get-anomalies")
+def test_anomaly_tool():
+    return get_anomalies_today()
+
+@app.get("/tools/check-health")
+def test_health_tool():
+    return check_system_health()
+
+# Main LLM interaction endpoint
 @app.post("/ask")
-async def ask_openai(request: Request):
+async def ask_agent(request: Request):
     body = await request.json()
-    user_prompt = body.get("prompt", "Hello!")
+    user_prompt = body.get("prompt", "").strip()
+
+    if not user_prompt:
+        return JSONResponse(status_code=400, content={"error": "Prompt is empty."})
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that can read sensor data and check system health."},
-                {"role": "user", "content": user_prompt}
-            ],
-            functions=tools,
-            function_call="auto"
-        )
-
-        choice = response.choices[0]
-        if choice.finish_reason == "function_call":
-            fn_name = choice.message.function_call.name
-            args = json.loads(choice.message.function_call.arguments)
-
-            if fn_name == "get_recent_temperatures":
-                result = get_recent_temperatures(**args)
-                return {
-                    "response": f"Here is the temperature data from {result['start']} to {result['end']}.",
-                    "data": result
-                }
-
-            elif fn_name == "get_anomalies_today":
-                result = get_anomalies_today()
-                return {
-                    "response": f"Here are the anomalies for {result['date']}.",
-                    "data": result
-                }
-
-            elif fn_name == "check_system_health":
-                result = check_system_health()
-                return {
-                    "response": "System health check complete.",
-                    "data": result
-                }
-
-        return {"response": choice.message.content}
-
+        response_text = ask_local_llm(user_prompt)
+        return {"response": response_text}
     except Exception as e:
-        return {"error": str(e)}
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+# Run the FastAPI app with: uvicorn agent.main:app --reload
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from llama_utils import ask_local_llm
+from tools import get_recent_temperatures, get_anomalies_today, check_system_health
+from datetime import datetime, timedelta
+
+app = FastAPI()
+
+# Allow CORS for frontend communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Use ["http://localhost:3000"] for tighter security in dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Health check endpoint
+@app.get("/ping")
+def ping():
+    return JSONResponse(content={"status": "ok", "message": "Local LLM agent is alive"})
+
+# Optional: Expose tools directly for manual testing
+@app.get("/tools/get-temperatures")
+def test_temp_tool():
+    return get_recent_temperatures()
+
+@app.get("/tools/get-anomalies")
+def test_anomaly_tool():
+    return get_anomalies_today()
+
+@app.get("/tools/check-health")
+def test_health_tool():
+    return check_system_health()
+
+# Main LLM interaction endpoint
+@app.post("/ask")
+async def ask_agent(request: Request):
+    body = await request.json()
+    user_prompt = body.get("prompt", "").strip()
+
+    if not user_prompt:
+        return JSONResponse(status_code=400, content={"error": "Prompt is empty."})
+
+    try:
+        response_text = ask_local_llm(user_prompt)
+        return {"response": response_text}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+# Run the FastAPI app with: uvicorn agent.main:app --reload
