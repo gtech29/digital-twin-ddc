@@ -6,4 +6,4 @@ COPY trane_sim.py .
 
 RUN pip install paho-mqtt==1.6.1
 
-CMD ["python", "trane_sim.py"]
+CMD ["python","-u", "trane_sim.py"]

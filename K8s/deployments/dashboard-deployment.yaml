@@ -1,31 +1,33 @@
-# /home/admin/Desktop/digital-twin-ddc/K8s/deployments/sensor-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sensor
+  name: dashboard
+  namespace: digital-twin
   labels:
-    app: sensor
+    app: dashboard
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sensor
+      app: dashboard
   template:
     metadata:
       labels:
-        app: sensor
+        app: dashboard
     spec:
       containers:
-        - name: sensor
-          image: sensor:latest
+        - name: dashboard
+          image: nextphasedv29/dashboard:latest
           imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
           env:
             - name: MQTT_BROKER
-              value: "mqtt-broker"
+              value: mqtt-broker
           resources:
             requests:
-              memory: "64Mi"
-              cpu: "250m"
-            limits:
+              cpu: "100m"
               memory: "128Mi"
+            limits:
               cpu: "500m"
+              memory: "256Mi"

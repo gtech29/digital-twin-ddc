@@ -1,31 +1,31 @@
-# /home/admin/Desktop/digital-twin-ddc/K8s/deployments/sensor-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sensor
+  name: jensys
+  namespace: digital-twin
   labels:
-    app: sensor
+    app: jensys
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sensor
+      app: jensys
   template:
     metadata:
       labels:
-        app: sensor
+        app: jensys
     spec:
       containers:
-        - name: sensor
-          image: sensor:latest
-          imagePullPolicy: IfNotPresent
+        - name: jensys
+          image: nextphasedv29/jensys:latest
+          imagePullPolicy: Always
           env:
             - name: MQTT_BROKER
               value: "mqtt-broker"
           resources:
             requests:
               memory: "64Mi"
-              cpu: "250m"
+              cpu: "100m"
             limits:
               memory: "128Mi"
-              cpu: "500m"
+              cpu: "250m"

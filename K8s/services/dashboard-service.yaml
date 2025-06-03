@@ -1,14 +1,12 @@
-# K8s/services/dashboard-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: dashboard-service
+  name: mqtt-broker
+  namespace: digital-twin
 spec:
   selector:
-    app: dashboard
+    app: mqtt-broker
   ports:
     - protocol: TCP
-      port: 5000
-      targetPort: 5000
-      nodePort: 30001
-  type: NodePort
+      port: 1883        # Service port
+      targetPort: 1883  # Container port in mosquitto.conf

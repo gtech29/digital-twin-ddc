@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dnp3
+  namespace: digital-twin
+  labels:
+    app: dnp3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dnp3
+  template:
+    metadata:
+      labels:
+        app: dnp3
+    spec:
+      containers:
+        - name: dnp3
+          image: dnp3:latest
+          imagePullPolicy: Never
+          env:
+            - name: MQTT_BROKER
+              value: mqtt-broker
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

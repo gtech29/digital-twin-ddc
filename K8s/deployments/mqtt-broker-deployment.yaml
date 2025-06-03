@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mqtt-broker
+  namespace: digital-twin
   labels:
     app: mqtt-broker
 spec:
@@ -15,8 +16,9 @@ spec:
         app: mqtt-broker
     spec:
       containers:
-        - name: mqtt
+        - name: mqtt-broker
           image: eclipse-mosquitto:2.0
+          imagePullPolicy: Never
           resources:
             requests:
               cpu: "100m"
@@ -31,4 +33,4 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: mosquitto-config
+            name: mosquitto-config  # Must match the ConfigMap in K8s/configmaps/
