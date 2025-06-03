@@ -1,14 +1,18 @@
 import asyncio
 import random
+import os
+import traceback
 from gmqtt import Client as MQTTClient
 
-BROKER = 'mqtt-broker'
+# Get MQTT broker hostname from env var or fallback to default
+BROKER = os.getenv('MQTT_BROKER', 'mqtt-broker')
 
 TOPICS = {
     "temperature": "sensor/temperature",
     "humidity": "sensor/humidity"
 }
 
+# Create an MQTT client instance
 client = MQTTClient("sensor-1")
 
 async def connect_with_retry():
@@ -19,6 +23,7 @@ async def connect_with_retry():
             break
         except Exception as e:
             print(f"[Sensor] Connection failed: {e}")
+            traceback.print_exc()
             await asyncio.sleep(5)
 
 async def publish_values():
@@ -29,7 +34,7 @@ async def publish_values():
         client.publish(TOPICS["temperature"], str(temp))
         client.publish(TOPICS["humidity"], str(humidity))
 
-        print(f"[Sensor] Published temp:{temp}, humidity:{humidity}")
+        print(f"[Sensor] Published temp: {temp}, humidity: {humidity}")
         await asyncio.sleep(5)
 
 async def main():

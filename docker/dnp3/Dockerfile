@@ -1,9 +1,17 @@
-FROM python:3.11-slim
+# Use a slim Python base image
+FROM python:3.9-slim
 
+# Set a working directory
 WORKDIR /app
 
-COPY . .
+# Copy only the requirements file first (for better layer caching)
+COPY requirements.txt .
 
-RUN pip install --no-cache-dir gmqtt
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python3", "dnp3_publisher.py"]
+# Copy the publisher script into the container
+COPY dnp3_publisher.py .
+
+# Configure the entrypoint
+CMD ["python", "dnp3_publisher.py"]
