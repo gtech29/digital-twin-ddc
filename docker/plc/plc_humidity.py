@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# /home/admin/Desktop/digital-twin-ddc/docker/plc/plc_humidity.py
 import os
 import asyncio
 import random
@@ -33,38 +33,41 @@ def on_connect(client, flags, rc, properties):
 def on_disconnect(client, packet, exc=None):
     print("[PLC] Disconnected from MQTT broker")
     connected_event.clear()
+    asyncio.create_task(connect_with_retry())  # reconnect in background
 
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 
 async def connect_with_retry():
-    while True:
+    while not connected_event.is_set():
         try:
             await client.connect(BROKER)
             await connected_event.wait()
             await flush_buffer()
-            break
         except Exception as e:
             print(f"[PLC] Connection failed: {e}")
             await asyncio.sleep(5)
 
 async def publish_humidity():
     while True:
-        humidity = round(random.uniform(40.0, 60.0), 2)
+        humidity = round(random.uniform(30.0, 60.0), 1)
         if connected_event.is_set():
-            client.publish(TOPIC, str(humidity))
-            print(f"[PLC] Published humidity: {humidity}")
+            try:
+                client.publish(TOPIC, str(humidity))
+                print(f"[PLC] Published humidity: {humidity}")
+            except Exception as e:
+                print(f"[PLC] Publish failed: {e}")
+                buffer_message(TOPIC, str(humidity))
         else:
             buffer_message(TOPIC, str(humidity))
             print(f"[PLC] Buffered humidity: {humidity}")
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
 
 async def main():
+    asyncio.create_task(connect_with_retry())
+    asyncio.create_task(publish_humidity())
     while True:
-        await connect_with_retry()
-        asyncio.create_task(publish_humidity())
-        while True:
-            await asyncio.sleep(1)
+        await asyncio.sleep(1)
 
 if __name__ == '__main__':
     asyncio.run(main())

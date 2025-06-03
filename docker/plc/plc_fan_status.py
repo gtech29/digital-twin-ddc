@@ -1,3 +1,4 @@
+# /home/admin/Desktop/digital-twin-ddc/docker/plc/plc_fan_status.py
 #!/usr/bin/env python3
 import os
 import asyncio
@@ -33,17 +34,18 @@ def on_connect(client, flags, rc, properties):
 def on_disconnect(client, packet, exc=None):
     print("[PLC] Disconnected from MQTT broker")
     connected_event.clear()
+    # Trigger reconnection
+    asyncio.create_task(connect_with_retry())
 
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 
 async def connect_with_retry():
-    while True:
+    while not connected_event.is_set():
         try:
             await client.connect(BROKER)
             await connected_event.wait()
             await flush_buffer()
-            break
         except Exception as e:
             print(f"[PLC] Connection failed: {e}")
             await asyncio.sleep(5)
@@ -52,19 +54,22 @@ async def publish_fan_status():
     while True:
         status = random.choice(["ON", "OFF"])
         if connected_event.is_set():
-            client.publish(TOPIC, status)
-            print(f"[PLC] Published fan status: {status}")
+            try:
+                client.publish(TOPIC, status)
+                print(f"[PLC] Published fan status: {status}")
+            except Exception as e:
+                print(f"[PLC] Publish failed: {e}")
+                buffer_message(TOPIC, status)
         else:
             buffer_message(TOPIC, status)
             print(f"[PLC] Buffered fan status: {status}")
         await asyncio.sleep(3)
 
 async def main():
+    asyncio.create_task(connect_with_retry())
+    asyncio.create_task(publish_fan_status())
     while True:
-        await connect_with_retry()
-        asyncio.create_task(publish_fan_status())
-        while True:
-            await asyncio.sleep(1)
+        await asyncio.sleep(1)
 
 if __name__ == '__main__':
     asyncio.run(main())

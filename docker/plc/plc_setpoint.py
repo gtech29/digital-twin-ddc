@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# /home/admin/Desktop/digital-twin-ddc/docker/plc/plc_setpoint.py
 import os
 import asyncio
 import random
@@ -33,17 +33,17 @@ def on_connect(client, flags, rc, properties):
 def on_disconnect(client, packet, exc=None):
     print("[PLC] Disconnected from MQTT broker")
     connected_event.clear()
+    asyncio.create_task(connect_with_retry())  # trigger reconnect in background
 
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 
 async def connect_with_retry():
-    while True:
+    while not connected_event.is_set():
         try:
             await client.connect(BROKER)
             await connected_event.wait()
             await flush_buffer()
-            break
         except Exception as e:
             print(f"[PLC] Connection failed: {e}")
             await asyncio.sleep(5)
@@ -52,19 +52,22 @@ async def publish_setpoint():
     while True:
         setpoint = round(random.uniform(21.0, 25.0), 1)
         if connected_event.is_set():
-            client.publish(TOPIC, str(setpoint))
-            print(f"[PLC] Published setpoint: {setpoint}")
+            try:
+                client.publish(TOPIC, str(setpoint))
+                print(f"[PLC] Published setpoint: {setpoint}")
+            except Exception as e:
+                print(f"[PLC] Publish failed: {e}")
+                buffer_message(TOPIC, str(setpoint))
         else:
             buffer_message(TOPIC, str(setpoint))
             print(f"[PLC] Buffered setpoint: {setpoint}")
         await asyncio.sleep(4)
 
 async def main():
+    asyncio.create_task(connect_with_retry())
+    asyncio.create_task(publish_setpoint())
     while True:
-        await connect_with_retry()
-        asyncio.create_task(publish_setpoint())
-        while True:
-            await asyncio.sleep(1)
+        await asyncio.sleep(1)
 
 if __name__ == '__main__':
     asyncio.run(main())
