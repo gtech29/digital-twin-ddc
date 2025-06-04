@@ -17,7 +17,9 @@ spec:
     spec:
       containers:
         - name: dashboard-ui
-          image: dashboard-ui:latest
+          image: nextphasedv29/dashboard-ui:latest
+          imagePullPolicy: IfNotPresent
+
           ports:
             - containerPort: 80
           env:
