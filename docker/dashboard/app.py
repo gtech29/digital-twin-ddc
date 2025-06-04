@@ -115,7 +115,7 @@ mqtt_thread.start()
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return "Digital Twin Dashboard Backend Running", 200
 
 @app.route("/api/device_data")
 def device_data():

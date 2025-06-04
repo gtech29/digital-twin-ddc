@@ -17,9 +17,12 @@ spec:
     spec:
       containers:
         - name: dashboard-ui
-          image: docker.io/nextphasedv29/dashboard-ui:latest
+          image: dashboard-ui:latest
           ports:
             - containerPort: 80
+          env:
+            - name: NEXT_PUBLIC_API_BASE_URL
+              value: "http://dashboard:5000"
           resources:
             requests:
               cpu: "100m"
@@ -40,4 +43,4 @@ spec:
   ports:
     - port: 80
       targetPort: 80
-      nodePort: 30080  # You can choose another free port if needed
+      nodePort: 30080
