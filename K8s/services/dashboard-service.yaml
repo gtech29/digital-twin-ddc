@@ -10,3 +10,6 @@ spec:
     - protocol: TCP
       port: 1883        # Service port
       targetPort: 1883  # Container port in mosquitto.conf
+
+
+  

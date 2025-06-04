@@ -50,3 +50,4 @@ out/
 agent/model/*
 agent/venv/
 agent/__pycache__/
+agent/*

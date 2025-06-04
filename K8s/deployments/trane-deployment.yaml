@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: trane
-          image: nextphasedv29/trane:latest
-          imagePullPolicy: Always
+          image: trane:latest
+          imagePullPolicy: Never
           env:
             - name: MQTT_BROKER
               value: "mqtt-broker"

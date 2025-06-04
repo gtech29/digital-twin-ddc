@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-ui
+  namespace: digital-twin
+  labels:
+    app: dashboard-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard-ui
+  template:
+    metadata:
+      labels:
+        app: dashboard-ui
+    spec:
+      containers:
+        - name: dashboard-ui
+          image: docker.io/nextphasedv29/dashboard-ui:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-ui
+  namespace: digital-twin
+spec:
+  type: NodePort
+  selector:
+    app: dashboard-ui
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080  # You can choose another free port if needed

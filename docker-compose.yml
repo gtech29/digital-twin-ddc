@@ -79,16 +79,16 @@ services:
     networks:
       - twin-net
 
-  agent:
-    build:
-      context: ./agent
-    container_name: llm-agent
-    ports:
-      - "8000:8000"
-    networks:
-      - twin-net
-    env_file:
-      - .env
+  # agent:
+  #   build:
+  #     context: ./agent
+  #   container_name: llm-agent
+  #   ports:
+  #     - "8000:8000"
+  #   networks:
+  #     - twin-net
+  #   env_file:
+  #     - .env
 
 networks:
   twin-net:

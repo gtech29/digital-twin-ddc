@@ -51,12 +51,6 @@ historical_data = {
     "trane": {"temperature": []},
 }
 
-# Example anomalies list; in practice, replace with real anomaly detection logic
-anomalies = [
-    {"index": 0, "value": 72.5, "status": "normal"},
-    {"index": 1, "value": 85.0, "status": "anomaly"},
-]
-
 TOPICS = {
     "plc/temperature": ("plc", "temperature"),
     "plc/setpoint": ("plc", "setpoint"),
@@ -105,7 +99,6 @@ def on_message(client, userdata, msg):
             # Keep only last 100 entries to limit memory
             if len(hist_list) > 100:
                 hist_list.pop(0)
-            # Update back
             historical_data[device][param] = hist_list
 
 mqtt_client = mqtt.Client(client_id="dashboard")
@@ -139,11 +132,6 @@ def historical_data_api():
     for entry in data:
         entry["time_iso"] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(entry["timestamp"]))
     return jsonify(data)
-
-@app.route("/api/predictions")
-def predictions():
-    # In practice, replace this with your real anomaly detection logic
-    return jsonify({"anomalies": anomalies})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
