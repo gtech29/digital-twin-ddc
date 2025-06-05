@@ -17,8 +17,10 @@ spec:
     spec:
       containers:
         - name: mqtt-broker
-          image: eclipse-mosquitto:2.0
-          imagePullPolicy: Never
+          image: nextphasedv29/mqtt-broker:latest
+          imagePullPolicy: Always
+          # image: eclipse-mosquitto:2.0
+          # imagePullPolicy: Never
           resources:
             requests:
               cpu: "100m"

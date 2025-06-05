@@ -1,16 +1,21 @@
-from flask import Flask, render_template, jsonify, request
-from flask_cors import CORS
-import paho.mqtt.client as mqtt
+import os
+import random
+import socket
 import threading
 import time
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import paho.mqtt.client as mqtt
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests from React
 
-MQTT_BROKER = "mqtt-broker"
+# Use environment variable for MQTT broker, default to 'mqtt-broker'
+MQTT_BROKER = os.getenv("MQTT_BROKER", "mqtt-broker")
 MQTT_PORT = 1883
+print(f"[INFO] Using MQTT broker at {MQTT_BROKER}:{MQTT_PORT}")
 
-# Store latest values including Jensys device
+# Store latest values including JENEsys and Trane devices
 latest_values = {
     "plc": {
         "temperature": None,
@@ -38,11 +43,11 @@ latest_values = {
         "ip": None,
         "model": None,
         "firmware": None,
-        "temperature": None,
+        "temperature": None
     }
 }
 
-# Store historical values for temperature for each device
+# Historical storage
 historical_data = {
     "plc": {"temperature": []},
     "dnp3": {"temperature": []},
@@ -51,6 +56,7 @@ historical_data = {
     "trane": {"temperature": []},
 }
 
+# MQTT topic to data mapping
 TOPICS = {
     "plc/temperature": ("plc", "temperature"),
     "plc/setpoint": ("plc", "setpoint"),
@@ -76,6 +82,7 @@ TOPICS = {
     "trane/temperature": ("trane", "temperature"),
 }
 
+# MQTT handlers
 def on_connect(client, userdata, flags, rc):
     print(f"[MQTT] Connected with result code {rc}")
     for topic in TOPICS:
@@ -91,44 +98,76 @@ def on_message(client, userdata, msg):
         device, param = TOPICS[topic]
         latest_values[device][param] = payload
 
-        # Append to historical data if temperature
         if param == "temperature":
             timestamp = int(time.time())
             hist_list = historical_data.get(device, {}).get(param, [])
             hist_list.append({"timestamp": timestamp, "value": float(payload)})
-            # Keep only last 100 entries to limit memory
             if len(hist_list) > 100:
                 hist_list.pop(0)
             historical_data[device][param] = hist_list
 
+# Try connecting to broker with fallback
 mqtt_client = mqtt.Client(client_id="dashboard")
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
-mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
 
-def mqtt_loop():
-    mqtt_client.loop_forever()
+try:
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
+    def mqtt_loop():
+        mqtt_client.loop_forever()
 
-mqtt_thread = threading.Thread(target=mqtt_loop)
-mqtt_thread.daemon = True
-mqtt_thread.start()
+    mqtt_thread = threading.Thread(target=mqtt_loop)
+    mqtt_thread.daemon = True
+    mqtt_thread.start()
+    print("[MQTT] Background loop started.")
+except (socket.gaierror, ConnectionRefusedError) as e:
+    print(f"[ERROR] Failed to connect to MQTT broker at {MQTT_BROKER}:{MQTT_PORT} — {e}")
 
+# Flask routes
 @app.route("/")
 def index():
     return "Digital Twin Dashboard Backend Running", 200
 
 @app.route("/api/device_data")
 def device_data():
-    return jsonify(latest_values)
+    # Simulate fake data for frontend testing
+    fake_data = {
+        "plc": {
+            "temperature": round(20 + (5 * random.random()), 2),
+            "setpoint": "22.5",
+            "humidity": round(40 + (10 * random.random()), 2),
+            "fan_status": "on"
+        },
+        "dnp3": {
+            "temperature": round(19 + (6 * random.random()), 2),
+            "valve_position": "open",
+            "alarm": "normal"
+        },
+        "sensor": {
+            "temperature": round(21 + (3 * random.random()), 2),
+            "humidity": round(45 + (5 * random.random()), 2)
+        },
+        "jensys": {
+            "temperature": round(23 + (2 * random.random()), 2),
+            "humidity": round(40 + (10 * random.random()), 2),
+            "ip": "192.168.1.50",
+            "model": "JENEsys 8000",
+            "firmware": "v3.1.2"
+        },
+        "trane": {
+            "ip": "192.168.1.60",
+            "model": "Tracer SC+",
+            "firmware": "v4.5.6",
+            "temperature": round(24 + (1 * random.random()), 2)
+        }
+    }
+    return jsonify(fake_data)
 
 @app.route("/api/historical_data")
 def historical_data_api():
     device = request.args.get("device", "plc")
     param = request.args.get("param", "temperature")
-
-    # Return data or empty list if not available
     data = historical_data.get(device, {}).get(param, [])
-    # Convert timestamps to ISO 8601 for frontend convenience
     for entry in data:
         entry["time_iso"] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(entry["timestamp"]))
     return jsonify(data)

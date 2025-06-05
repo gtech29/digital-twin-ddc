@@ -18,7 +18,7 @@ spec:
       containers:
         - name: dashboard
           image: nextphasedv29/dashboard:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
